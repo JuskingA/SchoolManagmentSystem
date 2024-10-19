@@ -1,30 +1,28 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const Role = require('./Role');
 
 const User = sequelize.define('User', {
-  name: {
+  username: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
   },
   email: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
+    validate: {
+      isEmail: true,
+    },
   },
   password: {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  roleId: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: Role,
-      key: 'id',
-    },
+  role: {
+    type: DataTypes.ENUM('student', 'teacher', 'admin'),
+    allowNull: false,
   },
 });
-
-User.belongsTo(Role, { foreignKey: 'roleId' });
 
 module.exports = User;

@@ -1,29 +1,21 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const Role = require('../models/Role');
 require('dotenv').config();
 
-async function registerUser(name, email, password, roleName) {
-  const existingUser = await User.findOne({ where: { email } });
-  if (existingUser) {
-    throw new Error('User already exists');
-  }
+async function loginUser(email, password) {
+  const user = await User.findOne({ where: { email } });
+  if (!user) throw new Error('User not found');
 
-  const role = await Role.findOne({ where: { name: roleName } });
-  if (!role) {
-    throw new Error('Role not found');
-  }
+  const validPassword = await bcrypt.compare(password, user.password);
+  if (!validPassword) throw new Error('Invalid password');
 
-  const hashedPassword = await bcrypt.hash(password, 10);
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    roleId: role.id,
+  // Create a JWT token
+  const token = jwt.sign({ id: user.id, roleId: user.roleId }, process.env.JWT_SECRET, {
+    expiresIn: '1h',
   });
 
-  return user;
+  return { token, user };
 }
 
-module.exports = { registerUser };
+module.exports = { loginUser };
